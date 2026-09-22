@@ -4,7 +4,7 @@ MCP-сервер для управления сайтами на up-im CMS из 
 
 ## Установка
 
-Нужен Node.js 22.18+ (исполняет TypeScript напрямую, сборка не требуется) и [Claude Code](https://claude.com/claude-code).
+Нужен Node.js 20+ и [Claude Code](https://claude.com/claude-code). Сборка не требуется.
 
 ```sh
 npm install -g git+https://github.com/Oreen/up-im-cms-mcp.git

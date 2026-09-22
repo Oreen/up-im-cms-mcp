@@ -1,0 +1,9 @@
+#!/bin/sh
+# Пересобирает build/ и добавляет его в коммит, чтобы в репо всегда лежала актуальная сборка.
+# Включение (один раз на машине разработчика): git config core.hooksPath .githooks
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if git diff --cached --name-only | grep -q '^src/'; then
+	echo "pre-commit: пересборка build/"
+	npx tsc || exit 1
+	git add build
+fi

@@ -4,14 +4,16 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"rootDir": "src",
-		"noEmit": true,
-		"allowImportingTsExtensions": true,
+		"outDir": "build",
+		"rewriteRelativeImportExtensions": true,
 		"verbatimModuleSyntax": true,
 		"erasableSyntaxOnly": true,
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"declaration": false,
+		"sourceMap": false
 	},
 	"include": ["src"]
 }
