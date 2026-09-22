@@ -49,8 +49,8 @@ async function flushInlineMedia(domain: string, node: number, id: number, ctx: i
 	}
 }
 
+//только чтение — никаких записей (тул item помечен readOnly)
 async function itemView(domain: string, node: number, id: number, ctx: iItemContext): Promise<Record<string, unknown>> {
-	await flushInlineMedia(domain, node, id, ctx)
 	const view = displayToAgent(await fetchItem(domain, node, id), ctx.fields, ctx.baseUrl)
 	if (view.url && view.public === false) view.note = "Элемент не опубликован — страница на сайте отдаст 404"
 	return view
@@ -103,6 +103,7 @@ export const itemSaveTool = defineTool({
 		checkRequired(ctx.fields, wire)
 		if (id) wireSet(wire, "id", String(id))
 		const saved = await api<{ id: number }>(domain, { method: "POST", path: `/admin/node/${node}/content/edit`, body: wire })
+		await flushInlineMedia(domain, node, saved.id, ctx)
 		return itemView(domain, node, saved.id, ctx)
 	},
 })
@@ -120,6 +121,7 @@ export const itemSetFieldTool = defineTool({
 		if (f.required) checkRequired([f], wire)
 		wireSet(wire, "id", String(id))
 		await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit_one_field`, body: wire })
+		if (f.field_type === "textarea") await flushInlineMedia(domain, node, id, ctx)
 		return itemView(domain, node, id, ctx)
 	},
 })

@@ -40,8 +40,8 @@ async function flushInlineMedia(domain, node, id, ctx) {
         await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit_one_field`, body: wire });
     }
 }
+//только чтение — никаких записей (тул item помечен readOnly)
 async function itemView(domain, node, id, ctx) {
-    await flushInlineMedia(domain, node, id, ctx);
     const view = displayToAgent(await fetchItem(domain, node, id), ctx.fields, ctx.baseUrl);
     if (view.url && view.public === false)
         view.note = "Элемент не опубликован — страница на сайте отдаст 404";
@@ -95,6 +95,7 @@ export const itemSaveTool = defineTool({
         if (id)
             wireSet(wire, "id", String(id));
         const saved = await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit`, body: wire });
+        await flushInlineMedia(domain, node, saved.id, ctx);
         return itemView(domain, node, saved.id, ctx);
     },
 });
@@ -113,6 +114,8 @@ export const itemSetFieldTool = defineTool({
             checkRequired([f], wire);
         wireSet(wire, "id", String(id));
         await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit_one_field`, body: wire });
+        if (f.field_type === "textarea")
+            await flushInlineMedia(domain, node, id, ctx);
         return itemView(domain, node, id, ctx);
     },
 });
