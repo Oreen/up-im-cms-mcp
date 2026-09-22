@@ -1,4 +1,6 @@
 import { ValidationError } from "./errors.ts"
+import fs from "node:fs/promises"
+import path from "node:path"
 import { loadFile, isUrl } from "./files.ts"
 import { type Wire, type WirePart, wireSet } from "./http.ts"
 import { FILE_TYPES, MULTI_FILE_TYPES, MULTI_ID_TYPES, type OptionsKind, SELECT_TYPES, getOptions, type iField } from "./schema.ts"
@@ -38,6 +40,49 @@ function fileList(v: unknown): string[] {
 function refPairs(v: unknown): { title: string, value: string }[] {
 	if (!Array.isArray(v)) return []
 	return v.filter(isObj).map(it => ({ title: String(it.title ?? ""), value: String(it.value ?? "") }))
+}
+
+async function isLocalFile(source: string): Promise<boolean> {
+	if (isUrl(source) || source.startsWith("data:") || source.startsWith("/upload/")) return false
+	try {
+		return (await fs.stat(path.resolve(source.replace(/^file:\/\//, "")))).isFile()
+	} catch {
+		return false
+	}
+}
+
+//HTML редактора: <img src>, <source src>, <a href> с локальным путём (или URL для медиа) → data-URI,
+//который бэк (textareaField) выгрузит в /upload/. Ссылки <a> на URL — обычные ссылки, не трогаем.
+export async function inlineHtmlMedia(html: string): Promise<{ html: string, problems: string[] }> {
+	const problems: string[] = []
+	const tagRe = /<(img|source|a)\b([^>]*?)\s(src|href)=(["'])([^"']+)\4([^>]*)>/gi
+	const matches = [...html.matchAll(tagRe)]
+	let out = html
+	for (const m of matches) {
+		const [full, tag, pre, attr, quote, value, post] = m
+		const isMedia = tag.toLowerCase() !== "a"
+		if (value.startsWith("data:") || value.startsWith("/upload/") || /^(#|mailto:|tel:)/.test(value)) continue
+		const local = await isLocalFile(value)
+		if (!local && !(isMedia && isUrl(value))) continue
+		try {
+			const file = await loadFile(local ? value.replace(/^file:\/\//, "") : value)
+			const b64 = Buffer.from(await file.blob.arrayBuffer()).toString("base64")
+			const ext = path.extname(file.name).slice(1).toLowerCase()
+			let replacement: string
+			if (isMedia) {
+				const type = file.blob.type.startsWith("video/") ? "video/mp4" : file.blob.type.startsWith("image/") ? file.blob.type : ""
+				if (!type) { problems.push(`${value}: не изображение и не видео`); continue }
+				replacement = `<${tag}${pre} ${attr}=${quote}data:${type};base64,${b64}${quote}${post}>`
+			} else {
+				const download = /\bdownload\s*=/.test(pre + post) ? "" : ` download="${file.name}"`
+				replacement = `<${tag}${pre} ${attr}=${quote}file:${ext || "bin"};base64,${b64}${quote}${post}${download}>`
+			}
+			out = out.replace(full, replacement)
+		} catch (error) {
+			problems.push(`${value}: ${(error as Error).message}`)
+		}
+	}
+	return { html: out, problems }
 }
 
 export function wireKeysFor(field: iField): string[] {
@@ -125,10 +170,17 @@ export async function agentToWire(patch: AgentPatch, fields: iField[], ctx: iCon
 			continue
 		}
 		switch (field.field_type) {
-			case "text": case "textarea":
+			case "text":
 				if (value != null && typeof value !== "string") fail(field, `ожидается string, получено ${typeof value}`)
 				else wireSet(wire, code, value ?? "")
 				break
+			case "textarea": {
+				if (value != null && typeof value !== "string") { fail(field, `ожидается string, получено ${typeof value}`); break }
+				const inlined = await inlineHtmlMedia((value as string | null) ?? "")
+				for (const p of inlined.problems) fail(field, p)
+				wireSet(wire, code, inlined.html)
+				break
+			}
 			case "alias":
 				if (value != null && typeof value !== "string") fail(field, "ожидается string")
 				else if (value && !/^[a-z0-9_-]+$/.test(value as string)) fail(field, "допустимы только a-z, 0-9, _ и -")

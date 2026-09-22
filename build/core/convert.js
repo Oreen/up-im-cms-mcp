@@ -1,4 +1,6 @@
 import { ValidationError } from "./errors.js";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { loadFile, isUrl } from "./files.js";
 import { wireSet } from "./http.js";
 import { FILE_TYPES, MULTI_FILE_TYPES, MULTI_ID_TYPES, SELECT_TYPES, getOptions } from "./schema.js";
@@ -40,6 +42,56 @@ function refPairs(v) {
     if (!Array.isArray(v))
         return [];
     return v.filter(isObj).map(it => ({ title: String(it.title ?? ""), value: String(it.value ?? "") }));
+}
+async function isLocalFile(source) {
+    if (isUrl(source) || source.startsWith("data:") || source.startsWith("/upload/"))
+        return false;
+    try {
+        return (await fs.stat(path.resolve(source.replace(/^file:\/\//, "")))).isFile();
+    }
+    catch {
+        return false;
+    }
+}
+//HTML редактора: <img src>, <source src>, <a href> с локальным путём (или URL для медиа) → data-URI,
+//который бэк (textareaField) выгрузит в /upload/. Ссылки <a> на URL — обычные ссылки, не трогаем.
+export async function inlineHtmlMedia(html) {
+    const problems = [];
+    const tagRe = /<(img|source|a)\b([^>]*?)\s(src|href)=(["'])([^"']+)\4([^>]*)>/gi;
+    const matches = [...html.matchAll(tagRe)];
+    let out = html;
+    for (const m of matches) {
+        const [full, tag, pre, attr, quote, value, post] = m;
+        const isMedia = tag.toLowerCase() !== "a";
+        if (value.startsWith("data:") || value.startsWith("/upload/") || /^(#|mailto:|tel:)/.test(value))
+            continue;
+        const local = await isLocalFile(value);
+        if (!local && !(isMedia && isUrl(value)))
+            continue;
+        try {
+            const file = await loadFile(local ? value.replace(/^file:\/\//, "") : value);
+            const b64 = Buffer.from(await file.blob.arrayBuffer()).toString("base64");
+            const ext = path.extname(file.name).slice(1).toLowerCase();
+            let replacement;
+            if (isMedia) {
+                const type = file.blob.type.startsWith("video/") ? "video/mp4" : file.blob.type.startsWith("image/") ? file.blob.type : "";
+                if (!type) {
+                    problems.push(`${value}: не изображение и не видео`);
+                    continue;
+                }
+                replacement = `<${tag}${pre} ${attr}=${quote}data:${type};base64,${b64}${quote}${post}>`;
+            }
+            else {
+                const download = /\bdownload\s*=/.test(pre + post) ? "" : ` download="${file.name}"`;
+                replacement = `<${tag}${pre} ${attr}=${quote}file:${ext || "bin"};base64,${b64}${quote}${post}${download}>`;
+            }
+            out = out.replace(full, replacement);
+        }
+        catch (error) {
+            problems.push(`${value}: ${error.message}`);
+        }
+    }
+    return { html: out, problems };
 }
 export function wireKeysFor(field) {
     return [field.code, `${field.code}[]`, `${field.code}_files`];
@@ -132,12 +184,22 @@ export async function agentToWire(patch, fields, ctx) {
         }
         switch (field.field_type) {
             case "text":
-            case "textarea":
                 if (value != null && typeof value !== "string")
                     fail(field, `ожидается string, получено ${typeof value}`);
                 else
                     wireSet(wire, code, value ?? "");
                 break;
+            case "textarea": {
+                if (value != null && typeof value !== "string") {
+                    fail(field, `ожидается string, получено ${typeof value}`);
+                    break;
+                }
+                const inlined = await inlineHtmlMedia(value ?? "");
+                for (const p of inlined.problems)
+                    fail(field, p);
+                wireSet(wire, code, inlined.html);
+                break;
+            }
             case "alias":
                 if (value != null && typeof value !== "string")
                     fail(field, "ожидается string");
