@@ -59,15 +59,16 @@ export function csvColumns(fields) {
     return fields.map(f => ({ header: f.title, code: f.code, type: f.field_type, format: CSV_FORMAT[f.field_type] }));
 }
 //шапка без кавычек: парсер бэка (utils/parseCsv.ts) определяет разделитель по 3-му символу файла — ожидает "id;"
-function headerLine(cells, delimiter) {
+export function headerLine(cells, delimiter) {
     return cells.map(c => /[";\n\r,]/.test(c) ? `"${c.replace(/"/g, "\"\"")}"` : c).join(delimiter);
 }
-//CSV контента в формате импорта: разделитель ";", шапка = title полей, первый столбец id, без BOM
-export function buildItemsCsv(items, fields) {
-    const header = headerLine(["id", ...fields.map(f => f.title)], ";");
-    const rows = items.map(item => [String(item.id ?? ""), ...fields.map(f => cell(item, f))]);
+//CSV в формате импорта бэка: разделитель ";", шапка без кавычек, первый столбец id, без BOM
+export function buildCsv(header, rows) {
     const body = Papa.unparse(rows, { delimiter: ";", newline: "\r\n", quotes: true });
-    return `${header}\r\n${body}${body.length ? "\r\n" : ""}`;
+    return `${headerLine(header, ";")}\r\n${body}${body.length ? "\r\n" : ""}`;
+}
+export function buildItemsCsv(items, fields) {
+    return buildCsv(["id", ...fields.map(f => f.title)], items.map(item => [String(item.id ?? ""), ...fields.map(f => cell(item, f))]));
 }
 //подготовка файла к импорту: снять BOM и невидимые символы, шапку привести к виду id;… (без кавычек у id), проверить первый столбец
 export function prepareCsvForImport(raw) {

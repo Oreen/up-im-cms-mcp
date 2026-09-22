@@ -1,11 +1,20 @@
 import fs from "node:fs/promises";
 import { z } from "zod";
 import { getProject } from "../core/auth.js";
+import { buildCsv } from "../core/csv.js";
+import { EXPORT_PAGE_SIZE } from "../core/config.js";
 import { ValidationError } from "../core/errors.js";
+import { writeTextFile } from "../core/files.js";
 import { api, apiRaw, readImportSse, wireSet } from "../core/http.js";
 import { listQuery, listResult } from "../core/lists.js";
 import { getFields, getNode, getNodeParams } from "../core/schema.js";
 import { defineTool, zDomain, zFilters, zNode, zPage, zPath, zPerPage, zSorter } from "./define.js";
+//колонки CSV подборок — ровно те, что читает nodeGeneratorAdminController.importFile
+const CSV_COLUMNS = [
+    ["Заголовок", "title"], ["Заголовок в SEO блоке", "menutitle"], ["Мета заголовок", "meta_title"], ["Мета описание", "meta_description"],
+    ["Отключен от генератора", "blocked"], ["Выводить в seo блок", "seo_block"], ["Опубликован", "public"], ["Код элемента", "code"],
+];
+const CSV_FILTER_SLOTS = 6;
 const ALLOWED = ["id", "pub_date", "title", "menutitle", "code", "public", "blocked", "seo_block", "meta_title", "meta_description"];
 //типы полей элементов, по которым бэк строит подборки (nodeGeneratorAdminController.importFile)
 const FILTER_FIELD_TYPES = ["text", "textarea", "select", "multiselect", "multisel2area", "multiselectExtTable", "reference"];
@@ -158,6 +167,54 @@ export const generatedDeleteTool = defineTool({
         return { deleted: ids };
     },
 });
+export const generatedExportCsvTool = defineTool({
+    name: "generated_export_csv",
+    description: "Выгрузить подборки раздела в CSV (формат совместим с generated_import_csv; фильтры сужают выборку). Возвращает описание столбцов.",
+    input: { domain: zDomain, node: zNode, path: zPath.describe("куда сохранить .csv"), filters: zFilters, sorter: zSorter },
+    readOnly: true,
+    handler: async ({ domain, node, path, filters, sorter }) => {
+        const n = await getNode(domain, node);
+        const titleByCode = new Map((await getFields(domain, n.type)).map(f => [f.code, f.title]));
+        const paramFields = ((await getNodeParams(domain, node)).node_param_fields ?? []).filter(f => f.field_type === "text" || f.field_type === "textarea");
+        const all = [];
+        for (let page = 1;; page++) {
+            const query = listQuery({ page, perPage: EXPORT_PAGE_SIZE, filters, sorter }, ALLOWED, "id asc");
+            query.all_fields = "";
+            const data = await api(domain, { path: `/admin/node/${node}/generator`, query });
+            all.push(...data.items);
+            if (all.length >= data.totalItems || !data.items.length)
+                break;
+        }
+        const header = ["id", ...CSV_COLUMNS.map(([h]) => h)];
+        for (let i = 1; i <= CSV_FILTER_SLOTS; i++)
+            header.push(`Поле элементов ${i}`, `Значение поля ${i}`);
+        header.push(...paramFields.map(f => f.title));
+        const rows = all.map(g => {
+            const row = [String(g.id), ...CSV_COLUMNS.map(([, key]) => typeof g[key] === "boolean" ? (g[key] ? "Да" : "Нет") : String(g[key] ?? ""))];
+            const pairs = Object.entries(flatFilters(g.filters)).slice(0, CSV_FILTER_SLOTS);
+            for (let i = 0; i < CSV_FILTER_SLOTS; i++) {
+                const [key, value] = pairs[i] ?? ["", ""];
+                const [code, sub] = key.split("__");
+                row.push(key ? `${titleByCode.get(code) ?? code}${sub ? `__${sub}` : ""}` : "", String(value));
+            }
+            row.push(...paramFields.map(f => String(g.paramsDisplay?.[f.code] ?? "")));
+            return row;
+        });
+        const saved = await writeTextFile(path, buildCsv(header, rows));
+        return {
+            path: saved,
+            rows: rows.length,
+            delimiter: ";",
+            columns: [
+                { header: "id", format: "id подборки; пусто — создать" },
+                ...CSV_COLUMNS.map(([h, key]) => ({ header: h, format: ["blocked", "seo_block", "public"].includes(key) ? "«Да» / «Нет»" : "текст" })),
+                { header: "Поле элементов N / Значение поля N", format: "название поля элементов (из schema) и значение условия: для select — id, для reference — «Название__подзаголовок»; N = 1..6" },
+                ...paramFields.map(f => ({ header: f.title, format: "переопределение параметра раздела (текст)" })),
+            ],
+            import_rules: "Столбцы, которых нет в шапке, не меняются. Пустое «Поле элементов N» пропускается.",
+        };
+    },
+});
 export const generatedImportCsvTool = defineTool({
     name: "generated_import_csv",
     description: "Загрузить CSV подборок: первый столбец id (пусто — создать); заголовки: Заголовок, Заголовок в SEO блоке, Мета заголовок, Мета описание, Отключен от генератора, Выводить в seo блок, Опубликован (Да/Нет), Код элемента, «Поле элементов N» + «Значение поля N» (N=1..6; поле — по названию из schema, только text/textarea/select/multiselect/reference; select — название значения), названия текстовых параметров раздела. Отсутствующие столбцы не затираются.",
@@ -169,4 +226,4 @@ export const generatedImportCsvTool = defineTool({
         return readImportSse(response);
     },
 });
-export const generatedTools = [generatedListTool, generatedGetTool, generatedSaveTool, generatedCopyTool, generatedDeleteTool, generatedImportCsvTool];
+export const generatedTools = [generatedListTool, generatedGetTool, generatedSaveTool, generatedCopyTool, generatedDeleteTool, generatedExportCsvTool, generatedImportCsvTool];

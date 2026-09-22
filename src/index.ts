@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
+import { VERSION } from "./core/config.ts"
 import { formatError } from "./tools/define.ts"
 import { tools } from "./tools/index.ts"
 
 const server = new McpServer(
-	{ name: "up-im-cms", version: "0.1.0" },
+	{ name: "up-im-cms", version: VERSION },
 	{ instructions: "Администрирование сайтов на up-im CMS. Домен проекта обязателен в каждом вызове — список в projects. Перед правкой незнакомого раздела вызови schema. После сохранения проверяй результат по url из ответа." },
 )
 

@@ -15,7 +15,9 @@
 		"check": "tsc --noEmit",
 		"start": "node build/index.js",
 		"dev": "node src/index.ts",
-		"rest": "node src/rest.ts"
+		"rest": "node src/rest.ts",
+		"release": "npm version patch -m \"v%s\" && git push --follow-tags origin main",
+		"release:minor": "npm version minor -m \"v%s\" && git push --follow-tags origin main"
 	},
 	"engines": {
 		"node": ">=20"

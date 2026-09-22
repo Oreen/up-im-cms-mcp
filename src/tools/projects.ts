@@ -1,20 +1,24 @@
 import { z } from "zod"
 import { authStatus } from "../core/auth.ts"
+import { VERSION } from "../core/config.ts"
 import { startLogin } from "../core/loginServer.ts"
 import { readProjects } from "../core/store.ts"
 import { defineTool, zDomain } from "./define.ts"
 
 export const projectsTool = defineTool({
 	name: "projects",
-	description: "Список подключённых сайтов (доменов) и статус авторизации по каждому. Вызывай первым, если не знаешь домен.",
+	description: "Версия MCP и список подключённых сайтов (доменов) со статусом авторизации. Вызывай первым, если не знаешь домен.",
 	input: {},
 	readOnly: true,
-	handler: async () => readProjects().map(p => ({
-		domain: p.domain,
-		baseUrl: p.baseUrl,
-		user: p.userName || p.email,
-		auth: authStatus(p.domain),
-	})),
+	handler: async () => ({
+		mcp_version: VERSION,
+		projects: readProjects().map(p => ({
+			domain: p.domain,
+			baseUrl: p.baseUrl,
+			user: p.userName || p.email,
+			auth: authStatus(p.domain),
+		})),
+	}),
 })
 
 export const loginTool = defineTool({

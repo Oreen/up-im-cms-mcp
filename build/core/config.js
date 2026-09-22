@@ -1,5 +1,15 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+//версия пакета — единственный источник: package.json (npm version бампает её и ставит git-тег)
+export const VERSION = (() => {
+    try {
+        return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version;
+    }
+    catch {
+        return "0.0.0";
+    }
+})();
 export const LOGIN_PORT_DEFAULT = 4870;
 export const REST_PORT_DEFAULT = 4871;
 export const LOGIN_WAIT_MS = Number(process.env.UPIM_MCP_LOGIN_WAIT_MS) || 90_000;
