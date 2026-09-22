@@ -1,5 +1,5 @@
-import { z, ZodRawShape, ZodTypeAny } from "zod"
-import { ApiError, AuthRequiredError, ValidationError } from "../core/errors.js"
+import { z, type ZodRawShape, type ZodTypeAny } from "zod"
+import { ApiError, AuthRequiredError, ValidationError } from "../core/errors.ts"
 
 export interface iTool<S extends ZodRawShape = ZodRawShape> {
 	name: string

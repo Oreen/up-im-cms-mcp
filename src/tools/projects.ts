@@ -1,8 +1,8 @@
 import { z } from "zod"
-import { authStatus } from "../core/auth.js"
-import { startLogin } from "../core/loginServer.js"
-import { readProjects } from "../core/store.js"
-import { defineTool, zDomain } from "./define.js"
+import { authStatus } from "../core/auth.ts"
+import { startLogin } from "../core/loginServer.ts"
+import { readProjects } from "../core/store.ts"
+import { defineTool, zDomain } from "./define.ts"
 
 export const projectsTool = defineTool({
 	name: "projects",

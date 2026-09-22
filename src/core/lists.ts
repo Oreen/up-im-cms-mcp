@@ -1,6 +1,6 @@
-import { ITEMS_PAGE_SIZE_DEFAULT } from "./config.js"
-import { ValidationError } from "./errors.js"
-import { QueryValue } from "./http.js"
+import { ITEMS_PAGE_SIZE_DEFAULT } from "./config.ts"
+import { ValidationError } from "./errors.ts"
+import { type QueryValue } from "./http.ts"
 
 export type FilterValue = string | number | (string | number)[]
 

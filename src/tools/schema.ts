@@ -1,7 +1,7 @@
 import { z } from "zod"
-import { ValidationError } from "../core/errors.js"
-import { describeField, getFields, getNode, getNodeParams, getNodeTypes, getOptions, iField, isSelectTypeField } from "../core/schema.js"
-import { defineTool, zDomain, zNode } from "./define.js"
+import { ValidationError } from "../core/errors.ts"
+import { describeField, getFields, getNode, getNodeParams, getNodeTypes, getOptions, type iField, isSelectTypeField } from "../core/schema.ts"
+import { defineTool, zDomain, zNode } from "./define.ts"
 
 export const typesTool = defineTool({
 	name: "types",

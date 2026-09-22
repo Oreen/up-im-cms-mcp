@@ -4,20 +4,19 @@
 	"description": "MCP-сервер для администрирования сайтов на up-im CMS",
 	"type": "module",
 	"bin": {
-		"up-im-cms-mcp": "build/index.js"
+		"up-im-cms-mcp": "src/index.ts"
 	},
 	"files": [
-		"build",
+		"src",
 		"README.md"
 	],
 	"scripts": {
-		"build": "tsc",
-		"start": "node build/index.js",
-		"rest": "node build/rest.js",
-		"dev": "tsc --watch"
+		"start": "node src/index.ts",
+		"rest": "node src/rest.ts",
+		"check": "tsc"
 	},
 	"engines": {
-		"node": ">=20"
+		"node": ">=22.18"
 	},
 	"license": "UNLICENSED",
 	"private": true,

@@ -1,11 +1,11 @@
 import fs from "node:fs/promises"
 import { z } from "zod"
-import { getProject } from "../core/auth.js"
-import { ValidationError } from "../core/errors.js"
-import { Wire, api, apiRaw, readImportSse, wireSet } from "../core/http.js"
-import { iListResponse, listQuery, listResult } from "../core/lists.js"
-import { FieldType, getFields, getNode, getNodeParams } from "../core/schema.js"
-import { defineTool, zDomain, zFilters, zNode, zPage, zPath, zPerPage, zSorter } from "./define.js"
+import { getProject } from "../core/auth.ts"
+import { ValidationError } from "../core/errors.ts"
+import { type Wire, api, apiRaw, readImportSse, wireSet } from "../core/http.ts"
+import { type iListResponse, listQuery, listResult } from "../core/lists.ts"
+import { type FieldType, getFields, getNode, getNodeParams } from "../core/schema.ts"
+import { defineTool, zDomain, zFilters, zNode, zPage, zPath, zPerPage, zSorter } from "./define.ts"
 
 interface iGenerated {
 	id: number

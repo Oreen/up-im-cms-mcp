@@ -1,5 +1,5 @@
-import { SCHEMA_CACHE_MS } from "./config.js"
-import { api } from "./http.js"
+import { SCHEMA_CACHE_MS } from "./config.ts"
+import { api } from "./http.ts"
 
 export type FieldType =
 	| "text" | "multitext" | "date" | "integer" | "textarea"

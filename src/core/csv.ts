@@ -1,6 +1,6 @@
 import Papa from "papaparse"
-import { DisplayItem } from "./convert.js"
-import { FieldType, iField } from "./schema.js"
+import { type DisplayItem } from "./convert.ts"
+import { type FieldType, type iField } from "./schema.ts"
 
 //формат ячейки при импорте (contentAdminController.importFile → replaceValue)
 export const CSV_FORMAT: Record<FieldType, string> = {

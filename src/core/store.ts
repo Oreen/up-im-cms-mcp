@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
-import { HOME_DIR, LOCK_FILE, LOCK_STALE_MS, LOCK_WAIT_MS, PROJECTS_FILE, TOKENS_FILE } from "./config.js"
+import { HOME_DIR, LOCK_FILE, LOCK_STALE_MS, LOCK_WAIT_MS, PROJECTS_FILE, TOKENS_FILE } from "./config.ts"
 
 export interface iTokenRecord {
 	accessToken: string

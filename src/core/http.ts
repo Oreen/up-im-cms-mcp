@@ -1,5 +1,5 @@
-import { baseHeaders, getAuthHeaders, getProject } from "./auth.js"
-import { ApiError, AuthRequiredError } from "./errors.js"
+import { baseHeaders, getAuthHeaders, getProject } from "./auth.ts"
+import { ApiError, AuthRequiredError } from "./errors.ts"
 
 export type QueryValue = string | number | boolean | undefined | null | QueryValue[] | { [key: string]: QueryValue }
 

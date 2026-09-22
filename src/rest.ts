@@ -2,9 +2,9 @@
 //  GET  /tools            — список
 //  POST /tools/:name      — JSON-аргументы → результат
 import express from "express"
-import { REST_PORT_DEFAULT } from "./core/config.js"
-import { formatError, runTool } from "./tools/define.js"
-import { tools } from "./tools/index.js"
+import { REST_PORT_DEFAULT } from "./core/config.ts"
+import { formatError, runTool } from "./tools/define.ts"
+import { tools } from "./tools/index.ts"
 
 const app = express()
 app.use(express.json({ limit: "50mb" }))

@@ -1,7 +1,7 @@
 import { z } from "zod"
-import { api } from "../core/http.js"
-import { FilterValue, iListResponse, listQuery, listResult } from "../core/lists.js"
-import { defineTool, zDomain, zFilters, zPage, zPerPage, zSorter } from "./define.js"
+import { api } from "../core/http.ts"
+import { type FilterValue, type iListResponse, listQuery, listResult } from "../core/lists.ts"
+import { defineTool, zDomain, zFilters, zPage, zPerPage, zSorter } from "./define.ts"
 
 type Row = Record<string, unknown>
 

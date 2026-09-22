@@ -1,10 +1,10 @@
-import { iTool } from "./define.js"
-import { generatedTools } from "./generated.js"
-import { itemTools } from "./items.js"
-import { nodeTools } from "./nodes.js"
-import { loginTool, projectsTool } from "./projects.js"
-import { readonlyTools } from "./readonly.js"
-import { optionsTool, schemaTool, typesTool } from "./schema.js"
+import { type iTool } from "./define.ts"
+import { generatedTools } from "./generated.ts"
+import { itemTools } from "./items.ts"
+import { nodeTools } from "./nodes.ts"
+import { loginTool, projectsTool } from "./projects.ts"
+import { readonlyTools } from "./readonly.ts"
+import { optionsTool, schemaTool, typesTool } from "./schema.ts"
 
 export const tools: iTool[] = [
 	projectsTool, loginTool,

@@ -1,17 +1,26 @@
 export class ApiError extends Error {
-	constructor(public status: number, message: string) {
+	status: number
+
+	constructor(status: number, message: string) {
 		super(message)
+		this.status = status
 	}
 }
 
 export class AuthRequiredError extends Error {
-	constructor(public domain: string, reason: string) {
+	domain: string
+
+	constructor(domain: string, reason: string) {
 		super(`Нет авторизации для ${domain}: ${reason}. Вызови login("${domain}")`)
+		this.domain = domain
 	}
 }
 
 export class ValidationError extends Error {
-	constructor(public problems: string[]) {
+	problems: string[]
+
+	constructor(problems: string[]) {
 		super(problems.join("\n"))
+		this.problems = problems
 	}
 }

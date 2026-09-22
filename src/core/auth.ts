@@ -1,6 +1,6 @@
-import { ACCESS_REFRESH_AHEAD_MS } from "./config.js"
-import { ApiError, AuthRequiredError } from "./errors.js"
-import { iProjectRecord, iTokenRecord, readProject, readTokens, withRefreshLock, writeProject, writeTokens } from "./store.js"
+import { ACCESS_REFRESH_AHEAD_MS } from "./config.ts"
+import { ApiError, AuthRequiredError } from "./errors.ts"
+import { type iProjectRecord, type iTokenRecord, readProject, readTokens, withRefreshLock, writeProject, writeTokens } from "./store.ts"
 
 export function resolveBaseUrl(domain: string, baseUrl?: string): string {
 	if (baseUrl) return baseUrl.replace(/\/+$/, "")

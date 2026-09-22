@@ -1,13 +1,13 @@
 import fs from "node:fs/promises"
 import { z } from "zod"
-import { getProject } from "../core/auth.js"
-import { AgentPatch, DisplayItem, agentToWire, displayToAgent, displayToWire, wireKeysFor } from "../core/convert.js"
-import { ValidationError } from "../core/errors.js"
-import { writeBinaryFile } from "../core/files.js"
-import { Wire, api, apiRaw, readImportSse, wireSet } from "../core/http.js"
-import { FieldType, getNode, getNodeParams, iAdminNode, iField } from "../core/schema.js"
-import { defineTool, zDomain, zNode, zPath } from "./define.js"
-import { mergeWire } from "./items.js"
+import { getProject } from "../core/auth.ts"
+import { type AgentPatch, type DisplayItem, agentToWire, displayToAgent, displayToWire, wireKeysFor } from "../core/convert.ts"
+import { ValidationError } from "../core/errors.ts"
+import { writeBinaryFile } from "../core/files.ts"
+import { type Wire, api, apiRaw, readImportSse, wireSet } from "../core/http.ts"
+import { type FieldType, getNode, getNodeParams, type iAdminNode, type iField } from "../core/schema.ts"
+import { defineTool, zDomain, zNode, zPath } from "./define.ts"
+import { mergeWire } from "./items.ts"
 
 //фиксированные поля раздела в терминах iField — чтобы переиспользовать конвертер контента
 function nodeField(code: string, title: string, field_type: FieldType, required = false): iField {

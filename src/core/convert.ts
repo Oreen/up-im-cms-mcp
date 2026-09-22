@@ -1,7 +1,7 @@
-import { ValidationError } from "./errors.js"
-import { loadFile, isUrl } from "./files.js"
-import { Wire, WirePart, wireSet } from "./http.js"
-import { FILE_TYPES, MULTI_FILE_TYPES, MULTI_ID_TYPES, OptionsKind, SELECT_TYPES, getOptions, iField } from "./schema.js"
+import { ValidationError } from "./errors.ts"
+import { loadFile, isUrl } from "./files.ts"
+import { type Wire, type WirePart, wireSet } from "./http.ts"
+import { FILE_TYPES, MULTI_FILE_TYPES, MULTI_ID_TYPES, type OptionsKind, SELECT_TYPES, getOptions, type iField } from "./schema.ts"
 
 export type DisplayItem = Record<string, unknown>
 export type AgentPatch = Record<string, unknown>

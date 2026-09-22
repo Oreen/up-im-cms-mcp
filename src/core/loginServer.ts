@@ -1,9 +1,9 @@
 import http from "node:http"
 import crypto from "node:crypto"
 import { spawn } from "node:child_process"
-import { LOGIN_PORT_DEFAULT, LOGIN_SERVER_IDLE_MS, LOGIN_WAIT_MS } from "./config.js"
-import { loginWithPassword, resolveBaseUrl } from "./auth.js"
-import { iProjectRecord, readProject } from "./store.js"
+import { LOGIN_PORT_DEFAULT, LOGIN_SERVER_IDLE_MS, LOGIN_WAIT_MS } from "./config.ts"
+import { loginWithPassword, resolveBaseUrl } from "./auth.ts"
+import { type iProjectRecord, readProject } from "./store.ts"
 
 interface iPending {
 	domain: string
