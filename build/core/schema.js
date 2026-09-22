@@ -26,6 +26,13 @@ export const INPUT_HINT = {
     multiimage: "string[] в итоговом порядке: текущие имена файлов — оставить, пути/URL — добавить; [] — удалить все",
     multifile: "string[] в итоговом порядке: текущие имена файлов — оставить, пути/URL — добавить; [] — удалить все",
 };
+//что умеет WYSIWYG-редактор (TinyMCE + плагин upcmssnippet в админке): агент может писать этот HTML напрямую
+export const EDITOR_HINT = [
+    "Медиа внутри HTML: <img src=\"data:image/…;base64,…\">, <video><source src=\"data:video/mp4;base64,…\"></video>, <a href=\"file:<ext>;base64,…\" download=\"имя.ext\">файл</a> — сервер сохранит в /upload/ и подставит ссылки.",
+    "Сниппеты (блоки, которые рендерит фронт сайта): <div class=\"slider\"><img src=\"/upload/…\">…</div> — слайдер из картинок; <div class=\"banner\"></div>; <div class=\"feedback\"></div> — форма заявки; <div class=\"feedback_button\">Текст кнопки</div>; <div class=\"subscribe\"></div> — форма подписки; <div class=\"telegram\"></div>.",
+    "Аккордеон: <details class=\"mce-accordion\"><summary class=\"mce-accordion-summary\">Заголовок</summary><div class=\"mce-accordion-body\"><p>…</p></div></details>.",
+    "Разрешён <noindex>. Набор сниппетов и их вид зависят от конкретного сайта — при сомнении посмотри HTML существующего элемента через item.",
+].join(" ");
 const cache = new Map();
 export async function getFields(domain, type) {
     const key = `${domain}|${type}`;
@@ -56,8 +63,10 @@ export function describeField(field) {
     const out = { code: field.code, title: field.title, type: field.field_type, input: INPUT_HINT[field.field_type] };
     if (field.required)
         out.required = true;
-    if (field.editor && field.field_type === "textarea")
+    if (field.editor && field.field_type === "textarea") {
         out.html_editor = true;
+        out.editor_hint = EDITOR_HINT;
+    }
     if (field.table_data && SELECT_TYPES.includes(field.field_type))
         out.options_from = field.table_data;
     if (field.tooltip)
