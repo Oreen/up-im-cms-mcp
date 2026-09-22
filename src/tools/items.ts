@@ -2,7 +2,7 @@ import fs from "node:fs/promises"
 import { z } from "zod"
 import { getProject } from "../core/auth.ts"
 import { EXPORT_PAGE_SIZE } from "../core/config.ts"
-import { type AgentPatch, type DisplayItem, agentToWire, checkRequired, displayToAgent, displayToWire, isFileType, wireKeysFor } from "../core/convert.ts"
+import { type AgentPatch, type DisplayItem, agentToWire, checkRequired, displayToAgent, displayToWire, hasInlineMedia, isFileType, wireKeysFor } from "../core/convert.ts"
 import { buildItemsCsv, csvColumns, prepareCsvForImport } from "../core/csv.ts"
 import { ValidationError } from "../core/errors.ts"
 import { writeTextFile } from "../core/files.ts"
@@ -39,7 +39,18 @@ function patchedFields(patch: AgentPatch, fields: iField[]): iField[] {
 	return fields.filter(f => f.code in patch)
 }
 
+//второй проход для textarea с base64-медиа, оставшимися после создания (см. hasInlineMedia)
+async function flushInlineMedia(domain: string, node: number, id: number, ctx: iItemContext): Promise<void> {
+	const current = await fetchItem(domain, node, id)
+	for (const field of ctx.fields) {
+		if (field.field_type !== "textarea" || !hasInlineMedia(current[field.code])) continue
+		const wire: Wire = new Map([[field.code, [current[field.code] as string]], ["id", [String(id)]]])
+		await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit_one_field`, body: wire })
+	}
+}
+
 async function itemView(domain: string, node: number, id: number, ctx: iItemContext): Promise<Record<string, unknown>> {
+	await flushInlineMedia(domain, node, id, ctx)
 	const view = displayToAgent(await fetchItem(domain, node, id), ctx.fields, ctx.baseUrl)
 	if (view.url && view.public === false) view.note = "Элемент не опубликован — страница на сайте отдаст 404"
 	return view

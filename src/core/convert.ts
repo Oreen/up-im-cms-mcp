@@ -56,6 +56,14 @@ async function localFilePath(source: string): Promise<string | null> {
 	}
 }
 
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"]
+
+//бэк выгружает base64 из HTML только когда у поля уже есть строковое значение (textareaField.setRequestValue):
+//у нового элемента/параметра оно null → нужен второй проход тем же значением
+export function hasInlineMedia(html: unknown): boolean {
+	return typeof html === "string" && /(data:(image|video)\/[^;]+|file:[a-z0-9]+);base64,/i.test(html)
+}
+
 //HTML редактора: <img src>, <source src>, <a href> с локальным путём (или URL для медиа) → data-URI,
 //который бэк (textareaField) выгрузит в /upload/. Ссылки <a> на URL — обычные ссылки, не трогаем.
 export async function inlineHtmlMedia(html: string): Promise<{ html: string, problems: string[] }> {
@@ -75,8 +83,9 @@ export async function inlineHtmlMedia(html: string): Promise<{ html: string, pro
 			const ext = path.extname(file.name).slice(1).toLowerCase()
 			let replacement: string
 			if (isMedia) {
-				const type = file.blob.type.startsWith("video/") ? "video/mp4" : file.blob.type.startsWith("image/") ? file.blob.type : ""
-				if (!type) { problems.push(`${value}: не изображение и не видео`); continue }
+				//бэк (uploadService.uploadPhoto) принимает только эти форматы; видео — только mp4
+				const type = file.blob.type.startsWith("video/") ? "video/mp4" : IMAGE_TYPES.includes(file.blob.type) ? file.blob.type : ""
+				if (!type) { problems.push(`${value}: допустимы изображения JPG/PNG/WEBP/SVG или видео MP4, получен ${file.blob.type || "неизвестный тип"}`); continue }
 				replacement = `<${tag}${pre} ${attr}=${quote}data:${type};base64,${b64}${quote}${post}>`
 			} else {
 				const download = /\bdownload\s*=/.test(pre + post) ? "" : ` download="${file.name}"`

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { z } from "zod";
 import { getProject } from "../core/auth.js";
 import { EXPORT_PAGE_SIZE } from "../core/config.js";
-import { agentToWire, checkRequired, displayToAgent, displayToWire, isFileType, wireKeysFor } from "../core/convert.js";
+import { agentToWire, checkRequired, displayToAgent, displayToWire, hasInlineMedia, isFileType, wireKeysFor } from "../core/convert.js";
 import { buildItemsCsv, csvColumns, prepareCsvForImport } from "../core/csv.js";
 import { ValidationError } from "../core/errors.js";
 import { writeTextFile } from "../core/files.js";
@@ -30,7 +30,18 @@ export function mergeWire(base, patch, patchedFields) {
 function patchedFields(patch, fields) {
     return fields.filter(f => f.code in patch);
 }
+//второй проход для textarea с base64-медиа, оставшимися после создания (см. hasInlineMedia)
+async function flushInlineMedia(domain, node, id, ctx) {
+    const current = await fetchItem(domain, node, id);
+    for (const field of ctx.fields) {
+        if (field.field_type !== "textarea" || !hasInlineMedia(current[field.code]))
+            continue;
+        const wire = new Map([[field.code, [current[field.code]]], ["id", [String(id)]]]);
+        await api(domain, { method: "POST", path: `/admin/node/${node}/content/edit_one_field`, body: wire });
+    }
+}
 async function itemView(domain, node, id, ctx) {
+    await flushInlineMedia(domain, node, id, ctx);
     const view = displayToAgent(await fetchItem(domain, node, id), ctx.fields, ctx.baseUrl);
     if (view.url && view.public === false)
         view.note = "Элемент не опубликован — страница на сайте отдаст 404";

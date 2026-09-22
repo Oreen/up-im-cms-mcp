@@ -1,7 +1,7 @@
 import fs from "node:fs/promises"
 import { z } from "zod"
 import { getProject } from "../core/auth.ts"
-import { type AgentPatch, type DisplayItem, agentToWire, displayToAgent, displayToWire, wireKeysFor } from "../core/convert.ts"
+import { type AgentPatch, type DisplayItem, agentToWire, displayToAgent, displayToWire, hasInlineMedia, wireKeysFor } from "../core/convert.ts"
 import { ValidationError } from "../core/errors.ts"
 import { writeBinaryFile } from "../core/files.ts"
 import { type Wire, api, apiRaw, readImportSse, wireSet } from "../core/http.ts"
@@ -172,6 +172,12 @@ export const nodeSaveTool = defineTool({
 			const patch = await agentToWire(params, paramFields, { domain, optionsKind: "params", current })
 			const wire = mergeWire(displayToWire(current, paramFields), patch, paramFields.filter(f => f.code in params))
 			await api(domain, { method: "POST", path: `/admin/node/${nodeId}/params/edit`, body: wire })
+			//второй проход: у параметра без прежнего значения бэк не выгружает base64-медиа
+			const after = await getNodeParams(domain, nodeId)
+			const stuck = paramFields.filter(f => f.field_type === "textarea" && hasInlineMedia(after.node_param_values?.[f.code]))
+			if (stuck.length) {
+				await api(domain, { method: "POST", path: `/admin/node/${nodeId}/params/edit`, body: displayToWire(after.node_param_values ?? {}, paramFields) })
+			}
 		}
 		return nodeView(domain, nodeId)
 	},
