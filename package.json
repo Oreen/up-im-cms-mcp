@@ -12,7 +12,6 @@
 	],
 	"scripts": {
 		"build": "tsc",
-		"prepare": "tsc",
 		"start": "node build/index.js",
 		"rest": "node build/rest.js",
 		"dev": "tsc --watch"
