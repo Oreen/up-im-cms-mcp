@@ -1,5 +1,6 @@
 import { ValidationError } from "./errors.js";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { loadFile, isUrl } from "./files.js";
 import { wireSet } from "./http.js";
@@ -43,14 +44,19 @@ function refPairs(v) {
         return [];
     return v.filter(isObj).map(it => ({ title: String(it.title ?? ""), value: String(it.value ?? "") }));
 }
-async function isLocalFile(source) {
-    if (isUrl(source) || source.startsWith("data:") || source.startsWith("/upload/"))
-        return false;
+//абсолютный путь файловой системы (/…, C:\…, ~/…, file://) к существующему файлу — иначе null.
+//site-relative ссылки (/uslugi/, /upload/x.webp) на диске не существуют и остаются как есть; относительные пути не принимаются намеренно
+async function localFilePath(source) {
+    let p = source.replace(/^file:\/\//, "");
+    if (p.startsWith("~/"))
+        p = path.join(os.homedir(), p.slice(2));
+    if (!path.isAbsolute(p) || p.startsWith("/upload/"))
+        return null;
     try {
-        return (await fs.stat(path.resolve(source.replace(/^file:\/\//, "")))).isFile();
+        return (await fs.stat(p)).isFile() ? p : null;
     }
     catch {
-        return false;
+        return null;
     }
 }
 //HTML редактора: <img src>, <source src>, <a href> с локальным путём (или URL для медиа) → data-URI,
@@ -65,11 +71,11 @@ export async function inlineHtmlMedia(html) {
         const isMedia = tag.toLowerCase() !== "a";
         if (value.startsWith("data:") || value.startsWith("/upload/") || /^(#|mailto:|tel:)/.test(value))
             continue;
-        const local = await isLocalFile(value);
+        const local = await localFilePath(value);
         if (!local && !(isMedia && isUrl(value)))
             continue;
         try {
-            const file = await loadFile(local ? value.replace(/^file:\/\//, "") : value);
+            const file = await loadFile(local ?? value);
             const b64 = Buffer.from(await file.blob.arrayBuffer()).toString("base64");
             const ext = path.extname(file.name).slice(1).toLowerCase();
             let replacement;

@@ -8,7 +8,7 @@ export const MULTI_FILE_TYPES = ["multiimage", "multifile"];
 export const INPUT_HINT = {
     text: "string",
     alias: "string, только [a-z0-9_-]; пусто → сгенерируется из title",
-    textarea: "string HTML; в <img src>/<source src>/<a href> можно указать путь к локальному файлу или URL картинки — MCP загрузит их на сайт",
+    textarea: "string HTML; в <img src>/<source src>/<a href> можно указать АБСОЛЮТНЫЙ путь к локальному файлу (для img/source — и URL) — MCP загрузит их на сайт; обычные ссылки не трогаются",
     integer: "number",
     checkbox: "boolean",
     date: "string ISO 8601 или null",
@@ -28,7 +28,7 @@ export const INPUT_HINT = {
 };
 //что умеет WYSIWYG-редактор (TinyMCE + плагин upcmssnippet в админке): агент может писать этот HTML напрямую
 export const EDITOR_HINT = [
-    "Медиа внутри HTML: <img src=\"/путь/или/https://…/photo.jpg\">, <video><source src=\"/путь/clip.mp4\"></video>, <a href=\"/путь/doc.pdf\">файл</a> — MCP загрузит файлы на сайт и подставит ссылки /upload/…; уже загруженные /upload/… и внешние ссылки <a href=\"https://…\"> остаются как есть.",
+    "Медиа внутри HTML: <img src=\"/Users/me/photo.jpg\"> или <img src=\"https://…/photo.jpg\">, <video><source src=\"/Users/me/clip.mp4\"></video>, <a href=\"/Users/me/doc.pdf\">файл</a> — MCP загрузит файлы на сайт и подставит ссылки /upload/…. Только абсолютные пути к существующим файлам; всё остальное (ссылки на страницы сайта, https-ссылки в <a>, уже загруженное /upload/…) остаётся как есть.",
     "Сниппеты (блоки, которые рендерит фронт сайта): <div class=\"slider\"><img src=\"/upload/…\">…</div> — слайдер из картинок; <div class=\"banner\"></div>; <div class=\"feedback\"></div> — форма заявки; <div class=\"feedback_button\">Текст кнопки</div>; <div class=\"subscribe\"></div> — форма подписки; <div class=\"telegram\"></div>.",
     "Аккордеон: <details class=\"mce-accordion\"><summary class=\"mce-accordion-summary\">Заголовок</summary><div class=\"mce-accordion-body\"><p>…</p></div></details>.",
     "Разрешён <noindex>. Набор сниппетов и их вид зависят от конкретного сайта — при сомнении посмотри HTML существующего элемента через item.",
