@@ -1,6 +1,6 @@
 {
 	"name": "up-im-cms-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "MCP-сервер для администрирования сайтов на up-im CMS",
 	"type": "module",
 	"bin": {
