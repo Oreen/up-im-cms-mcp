@@ -7,7 +7,7 @@ MCP-сервер для управления сайтами на up-im CMS из 
 Нужен Node.js 20+ и [Claude Code](https://claude.com/claude-code). Сборка не требуется.
 
 ```sh
-npm install -g git+https://github.com/Oreen/up-im-cms-mcp.git
+npm install -g https://github.com/Oreen/up-im-cms-mcp/tarball/main
 claude mcp add -s user up-im-cms -- up-im-cms-mcp
 ```
 
@@ -16,7 +16,14 @@ Windows — те же две команды в PowerShell.
 Обновление:
 
 ```sh
-npm install -g git+https://github.com/Oreen/up-im-cms-mcp.git
+npm install -g https://github.com/Oreen/up-im-cms-mcp/tarball/main
+```
+
+Удаление:
+
+```sh
+claude mcp remove up-im-cms -s user
+npm uninstall -g up-im-cms-mcp
 ```
 
 ## Первый запуск
