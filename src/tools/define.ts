@@ -1,0 +1,40 @@
+import { z, ZodRawShape, ZodTypeAny } from "zod"
+import { ApiError, AuthRequiredError, ValidationError } from "../core/errors.js"
+
+export interface iTool<S extends ZodRawShape = ZodRawShape> {
+	name: string
+	description: string
+	input: S
+	readOnly?: boolean
+	destructive?: boolean
+	handler: (args: z.infer<z.ZodObject<S>>) => Promise<unknown>
+}
+
+export function defineTool<S extends ZodRawShape>(tool: iTool<S>): iTool<ZodRawShape> {
+	return tool as unknown as iTool<ZodRawShape>
+}
+
+export function formatError(error: unknown): string {
+	if (error instanceof ValidationError) return `Ошибка валидации:\n- ${error.problems.join("\n- ")}`
+	if (error instanceof AuthRequiredError) return error.message
+	if (error instanceof ApiError) return `Сервер ответил ${error.status}: ${error.message}`
+	if (error instanceof z.ZodError) return `Неверные аргументы: ${error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+	return (error as Error).message ?? String(error)
+}
+
+export async function runTool(tool: iTool, rawArgs: unknown): Promise<unknown> {
+	const args = z.object(tool.input).parse(rawArgs ?? {})
+	return tool.handler(args)
+}
+
+//общие фрагменты схем
+export const zDomain = z.string().describe("Домен проекта, напр. polis.online (см. projects)")
+export const zNode = z.number().int().positive().describe("id раздела")
+export const zPage = z.number().int().positive().optional().describe("Страница, с 1")
+export const zPerPage = z.number().int().positive().max(1000).optional().describe("Элементов на страницу")
+export const zFilterValue: ZodTypeAny = z.union([z.string(), z.number(), z.array(z.union([z.string(), z.number()]))])
+export const zFilters = z.record(zFilterValue).optional().describe(
+	"Фильтры {поле: значение | [значения]}. Число — точное равенство, текст — поиск подстроки, дата YYYY-MM-DD — точное совпадение. Префиксы ключа: \"!поле\" (не равно), \">поле\" (>=), \"<поле\" (<=), напр. {\">pub_date\": \"2026-01-01\"}",
+)
+export const zSorter = z.string().optional().describe("Сортировка \"поле asc|desc\"")
+export const zPath = z.string().describe("Путь к файлу на локальном диске")
