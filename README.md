@@ -13,10 +13,10 @@ claude mcp add -s user up-im-cms -- up-im-cms-mcp
 
 Windows — те же две команды в PowerShell.
 
-Обновление:
+Обновление (`--prefer-online` обязателен — иначе npm возьмёт старый тарболл из кэша):
 
 ```sh
-npm install -g https://github.com/Oreen/up-im-cms-mcp/tarball/main
+npm install -g https://github.com/Oreen/up-im-cms-mcp/tarball/main --prefer-online
 ```
 
 Удаление:
